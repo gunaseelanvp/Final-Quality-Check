@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Final Quality Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .hidden {
+      display: none;
+    }
+    #result {
+      border-top: 1px solid #ccc;
+      margin-top: 20px;
+      padding-top: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #0056b3;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .whatsapp-btn {
+      display: inline-block;
+      background-color: #25D366;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      margin-top: 20px;
+      text-align: center;
+      width: 100%;
+      cursor: pointer;
+    }
+    .whatsapp-btn:hover {
+      background-color: #128C7E;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Final Quality Check</h2>
+    <form id="qcForm">
+      <label>Work Order Number</label>
+      <input type="text" id="woNumber" required />
+
+      <label>Model Number</label>
+      <input type="text" id="modelNumber" required />
+
+      <label>Work Order Quantity</label>
+      <input type="number" id="woQuantity" required />
+
+      <label>Inspection Type</label>
+      <select id="inspectionType" required>
+        <option value="general">General</option>
+        <option value="tightened">Tightened</option>
+      </select>
+
+      <label>Inspector Name</label>
+      <input type="text" id="inspectorName" required />
+
+      <button type="submit">Calculate</button>
+    </form>
+
+    <div id="serialSection" class="hidden">
+      <label>Enter 5 Sample Serial Numbers</label>
+      <input type="text" id="serial1" required />
+      <input type="text" id="serial2" required />
+      <input type="text" id="serial3" required />
+      <input type="text" id="serial4" required />
+      <input type="text" id="serial5" required />
+      <button onclick="generateScreenshot()">Generate Final Report</button>
+    </div>
+
+    <div id="result" class="hidden">
+      <h3>Final Report</h3>
+      <div id="output">
+        <!-- Dynamic content here -->
+      </div>
+      <a class="whatsapp-btn" id="whatsappShare" href="" target="_blank">Share via WhatsApp</a>
+    </div>
+  </div>
+
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    const form = document.getElementById("qcForm");
+    const serialSection = document.getElementById("serialSection");
+    const result = document.getElementById("result");
+    const output = document.getElementById("output");
+    const whatsappShare = document.getElementById("whatsappShare");
+
+    let formData = {};
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const woNumber = document.getElementById("woNumber").value;
+      const modelNumber = document.getElementById("modelNumber").value;
+      const woQuantity = parseInt(document.getElementById("woQuantity").value);
+      const inspectionType = document.getElementById("inspectionType").value;
+      const inspectorName = document.getElementById("inspectorName").value;
+
+      let inspectionQty = inspectionType === "general" ? Math.ceil(woQuantity * 0.1) : Math.ceil(woQuantity * 0.2);
+      let acceptanceLimit = Math.floor(inspectionQty * 0.95);
+      let rejectionLimit = inspectionQty - acceptanceLimit;
+
+      formData = { woNumber, modelNumber, woQuantity, inspectionType, inspectorName, inspectionQty, acceptanceLimit, rejectionLimit };
+
+      serialSection.classList.remove("hidden");
+    });
+
+    function generateScreenshot() {
+      const serials = [
+        document.getElementById("serial1").value,
+        document.getElementById("serial2").value,
+        document.getElementById("serial3").value,
+        document.getElementById("serial4").value,
+        document.getElementById("serial5").value,
+      ];
+
+      const html = `
+        <p><strong>Work Order Number:</strong> ${formData.woNumber}</p>
+        <p><strong>Model Number:</strong> ${formData.modelNumber}</p>
+        <p><strong>Work Order Quantity:</strong> ${formData.woQuantity}</p>
+        <p><strong>Inspection Type:</strong> ${formData.inspectionType}</p>
+        <p><strong>Inspector Name:</strong> ${formData.inspectorName}</p>
+        <p><strong>Quality Standard:</strong> ISO 19000</p>
+        <p><strong>Inspection Quantity:</strong> ${formData.inspectionQty}</p>
+        <p><strong>Acceptance Limit:</strong> ${formData.acceptanceLimit}</p>
+        <p><strong>Rejection Limit:</strong> ${formData.rejectionLimit}</p>
+        <p><strong>Sample Serial Numbers:</strong> ${serials.join(", ")}</p>
+      `;
+
+      output.innerHTML = html;
+      result.classList.remove("hidden");
+
+      html2canvas(document.getElementById("result")).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "Final_Quality_Check_Report.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+
+      const whatsappMessage = encodeURIComponent(html.replace(/<[^>]+>/g, "").replace(/
+/g, "").replace(/	/g, ""));
+      whatsappShare.href = `https://wa.me/?text=${whatsappMessage}`;
+    }
+  </script>
+</body>
+</html>
